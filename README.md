@@ -33,8 +33,8 @@
 
 ## 🚀 Live Deployment Links
 - **GitHub Repository:** [https://github.com/anjalimishra-0007/Ass-4-Event-Management-System](https://github.com/anjalimishra-0007/Ass-4-Event-Management-System)
-- **Frontend Live (Vercel):** [https://your-frontend.vercel.app](https://your-frontend.vercel.app) *(Update upon deployment)*
-- **Backend Live (Render):** [https://your-backend.onrender.com](https://your-backend.onrender.com) *(Update upon deployment)*
+- **Frontend Live (Vercel):** [https://ass-4-event-management-system.vercel.app](https://ass-4-event-management-system.vercel.app)
+- **Backend Live (Render):** [https://ass-4-event-management-system.onrender.com](https://ass-4-event-management-system.onrender.com)
 
 ---
 
