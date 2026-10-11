@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import API from "../services/api";
 
 const AuthContext = createContext();
@@ -7,6 +7,14 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState("");
+
+  const logout = useCallback(() => {
+    localStorage.removeItem("token");
+    setToken("");
+    setUser(null);
+    setAuthError("");
+  }, []);
 
   useEffect(() => {
     async function loadUser() {
@@ -22,31 +30,42 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
     loadUser();
-  }, [token]);
+  }, [token, logout]);
 
   const login = async (email, password) => {
-    const res = await API.post("/auth/login", { email, password });
-    localStorage.setItem("token", res.data.token);
-    setToken(res.data.token);
-    setUser(res.data.user);
-    return res.data;
+    try {
+      setAuthError("");
+      const res = await API.post("/auth/login", { email, password });
+      localStorage.setItem("token", res.data.token);
+      setToken(res.data.token);
+      setUser(res.data.user);
+      return res.data;
+    } catch (err) {
+      const msg = err.response?.data?.message || "Login failed. Please check your credentials.";
+      setAuthError(msg);
+      throw err;
+    }
   };
 
   const register = async (userData) => {
-    const res = await API.post("/auth/register", userData);
-    localStorage.setItem("token", res.data.token);
-    setToken(res.data.token);
-    setUser(res.data.user);
-    return res.data;
+    try {
+      setAuthError("");
+      const res = await API.post("/auth/register", userData);
+      localStorage.setItem("token", res.data.token);
+      setToken(res.data.token);
+      setUser(res.data.user);
+      return res.data;
+    } catch (err) {
+      const msg = err.response?.data?.message || "Registration failed. Please try again.";
+      setAuthError(msg);
+      throw err;
+    }
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken("");
-    setUser(null);
-  };
+  const clearAuthError = () => setAuthError("");
 
   const isAdmin = user?.role === "admin";
+  const isAuthenticated = !!user;
 
   return (
     <AuthContext.Provider
@@ -55,6 +74,9 @@ export function AuthProvider({ children }) {
         token,
         loading,
         isAdmin,
+        isAuthenticated,
+        authError,
+        clearAuthError,
         login,
         register,
         logout,
@@ -66,5 +88,10 @@ export function AuthProvider({ children }) {
 }
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 }
+
