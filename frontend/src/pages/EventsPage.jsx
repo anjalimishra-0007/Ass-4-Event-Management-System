@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import EventCard from "../components/EventCard";
+import TicketModal from "../components/TicketModal";
 
 export default function EventsPage({ notify }) {
   const [events, setEvents] = useState([]);
@@ -10,6 +11,7 @@ export default function EventsPage({ notify }) {
   const [selectedVenue, setSelectedVenue] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedTicketEvent, setSelectedTicketEvent] = useState(null);
 
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -146,11 +148,21 @@ export default function EventsPage({ notify }) {
                 event={event}
                 onRegister={handleRegister}
                 onCancelRegistration={handleCancelRegistration}
+                onViewTicket={(ev) => setSelectedTicketEvent(ev)}
               />
             ))}
           </div>
         )}
       </section>
+
+      {/* Digital Ticket Pass Modal */}
+      {selectedTicketEvent && (
+        <TicketModal
+          event={selectedTicketEvent}
+          user={user}
+          onClose={() => setSelectedTicketEvent(null)}
+        />
+      )}
     </div>
   );
 }
