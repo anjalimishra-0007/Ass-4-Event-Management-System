@@ -3,6 +3,7 @@ import {
   getAllEvents,
   getVenues,
   getCategories,
+  getDashboardStats,
   getEventById,
   createEvent,
   updateEvent,
@@ -21,6 +22,10 @@ const router = express.Router();
 router.get("/", getAllEvents);
 router.get("/venues", getVenues);
 router.get("/categories", getCategories);
+
+// Admin-only dashboard stats (must come before /:id)
+router.get("/stats", authenticateUser, requireAdmin, getDashboardStats);
+
 
 // Authenticated user registrations (Must come before /:id)
 router.get("/my-registrations", authenticateUser, getMyRegistrations);

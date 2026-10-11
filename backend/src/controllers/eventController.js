@@ -93,6 +93,61 @@ export const getCategories = async (req, res) => {
   }
 };
 
+// GET admin dashboard stats (Admin only)
+export const getDashboardStats = async (req, res) => {
+  try {
+    const now = new Date();
+
+    const [
+      totalEvents,
+      upcomingCount,
+      pastCount,
+      ongoingCount,
+      categoryBreakdown,
+      registrationAgg,
+      capacityAgg,
+    ] = await Promise.all([
+      Event.countDocuments(),
+      Event.countDocuments({ date: { $gte: now } }),
+      Event.countDocuments({ date: { $lt: now } }),
+      Event.countDocuments({ status: "ongoing" }),
+      Event.aggregate([
+        { $group: { _id: "$category", count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      Event.aggregate([
+        { $project: { registeredCount: { $size: "$registeredUsers" } } },
+        { $group: { _id: null, total: { $sum: "$registeredCount" } } },
+      ]),
+      Event.aggregate([
+        { $group: { _id: null, total: { $sum: "$capacity" } } },
+      ]),
+    ]);
+
+    const totalRegistrations = registrationAgg[0]?.total || 0;
+    const totalCapacity = capacityAgg[0]?.total || 0;
+    const fillRate =
+      totalCapacity > 0
+        ? Math.round((totalRegistrations / totalCapacity) * 100)
+        : 0;
+
+    res.json({
+      totalEvents,
+      upcomingCount,
+      pastCount,
+      ongoingCount,
+      totalRegistrations,
+      totalCapacity,
+      fillRate,
+      categoryBreakdown,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Failed to fetch dashboard stats", error: error.message });
+  }
+};
+
 // GET a single event by ID
 export const getEventById = async (req, res) => {
   try {
