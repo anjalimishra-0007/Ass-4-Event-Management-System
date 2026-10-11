@@ -1,14 +1,37 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function LoginPage({ notify }) {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({
+    email: localStorage.getItem("eventify_remembered_email") || "",
+    password: "",
+  });
+  const [rememberMe, setRememberMe] = useState(
+    Boolean(localStorage.getItem("eventify_remembered_email"))
+  );
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const redirectPath = location.state?.from?.pathname;
+
+  // Auto-redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      if (redirectPath) {
+        navigate(redirectPath, { replace: true });
+      } else if (user.role === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+    }
+  }, [user, redirectPath, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -21,12 +44,16 @@ export default function LoginPage({ notify }) {
 
     try {
       const data = await login(formData.email, formData.password);
-      notify(`Welcome back, ${data.user.name}!`, "success");
-      if (data.user.role === "admin") {
-        navigate("/admin");
+
+      if (rememberMe) {
+        localStorage.setItem("eventify_remembered_email", formData.email);
       } else {
-        navigate("/");
+        localStorage.removeItem("eventify_remembered_email");
       }
+
+      notify(`Welcome back, ${data.user.name}!`, "success");
+      const target = redirectPath || (data.user.role === "admin" ? "/admin" : "/");
+      navigate(target, { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || "Invalid credentials. Please try again.");
     } finally {
@@ -51,27 +78,53 @@ export default function LoginPage({ notify }) {
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label>Email Address</label>
+            <label htmlFor="login-email">Email Address</label>
             <input
+              id="login-email"
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
               placeholder="e.g. anjali@example.com"
+              autoComplete="email"
               required
             />
           </div>
 
           <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="••••••••"
-              required
-            />
+            <label htmlFor="login-password">Password</label>
+            <div className="password-input-wrapper">
+              <input
+                id="login-password"
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                className="toggle-password-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "👁️" : "🙈"}
+              </button>
+            </div>
+          </div>
+
+          <div className="form-options">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              <span>Remember email</span>
+            </label>
           </div>
 
           <button type="submit" className="btn-primary auth-submit" disabled={loading}>
@@ -108,3 +161,4 @@ export default function LoginPage({ notify }) {
     </div>
   );
 }
+
