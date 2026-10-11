@@ -11,9 +11,9 @@
 ---
 
 ## 👥 Team Information
-- **Team Name:** [Insert Team Name Here]
+- **Team Name:** Brogrammers
 - **Project Name:** Event Management System (Project ID: 7)
-- **Team Lead:** Anjali Mishra - Roll No: [Insert Roll No]
+- **Team Lead:** Anjali Mishra - Roll No: 13
 
 ### 🤝 Members & Work Distribution:
 1. **Anjali Mishra (Team Lead)** — Roll No: [13]  
