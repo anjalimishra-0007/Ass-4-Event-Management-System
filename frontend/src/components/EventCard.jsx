@@ -4,6 +4,7 @@ export default function EventCard({
   event,
   onRegister,
   onCancelRegistration,
+  onViewTicket,
   onEdit,
   onDelete,
 }) {
@@ -19,21 +20,42 @@ export default function EventCard({
   const registeredCount = event.registeredUsers?.length || 0;
   const seatsLeft = Math.max(0, event.capacity - registeredCount);
   const isFull = seatsLeft === 0;
+  const isLowCapacity = !isFull && seatsLeft <= 5;
 
   const isUserRegistered =
     user &&
     event.registeredUsers?.some((u) => {
-      const regId = typeof u === "string" ? u : u._id;
-      return regId === user.id;
+      const regId = typeof u === "string" ? u : u?._id;
+      return regId?.toString() === (user.id || user._id)?.toString();
     });
+
+  const handleCancelClick = () => {
+    if (window.confirm(`Are you sure you want to cancel your registration for "${event.title}"?`)) {
+      onCancelRegistration(event._id);
+    }
+  };
 
   return (
     <article className="event-card">
       <div className="event-card-header">
-        <span className="event-badge">
-          {isFull ? "Housefull" : `${seatsLeft} seats left`}
-        </span>
-        <span className="event-date-chip">{formattedDate}</span>
+        <div className="header-chips-left">
+          <span
+            className={`event-badge ${
+              isFull ? "badge-full" : isLowCapacity ? "badge-urgent" : ""
+            }`}
+          >
+            {isFull ? "Housefull" : isLowCapacity ? `🔥 Only ${seatsLeft} left` : `${seatsLeft} seats left`}
+          </span>
+          {event.category && (
+            <span className="category-chip">{event.category}</span>
+          )}
+        </div>
+        <div className="header-chips-right">
+          <span className="price-chip">
+            {event.price && event.price > 0 ? `₹${event.price}` : "Free"}
+          </span>
+          <span className="event-date-chip">{formattedDate}</span>
+        </div>
       </div>
 
       <div className="event-card-body">
@@ -60,7 +82,7 @@ export default function EventCard({
         {/* Capacity Bar */}
         <div className="capacity-bar-container">
           <div
-            className={`capacity-bar ${isFull ? "full" : ""}`}
+            className={`capacity-bar ${isFull ? "full" : isLowCapacity ? "urgent" : ""}`}
             style={{
               width: `${Math.min(100, (registeredCount / event.capacity) * 100)}%`,
             }}
@@ -87,12 +109,22 @@ export default function EventCard({
         ) : isUserRegistered ? (
           <div className="user-registered-actions">
             <span className="registered-badge">✓ Registered</span>
+            {onViewTicket && (
+              <button
+                className="view-ticket-btn"
+                onClick={() => onViewTicket(event)}
+                title="View digital event ticket"
+              >
+                🎟️ View Ticket
+              </button>
+            )}
             {onCancelRegistration && (
               <button
                 className="cancel-reg-btn"
-                onClick={() => onCancelRegistration(event._id)}
+                onClick={handleCancelClick}
+                title="Cancel your registration"
               >
-                Cancel
+                Cancel Pass
               </button>
             )}
           </div>
@@ -109,3 +141,4 @@ export default function EventCard({
     </article>
   );
 }
+
